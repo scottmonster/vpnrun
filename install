@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+base=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ "$(id -u)" != 0 ]; then
+    exec sudo -- /bin/sh "$base/install" "$@"
+fi
+if [ ! -x /usr/bin/python3 ]; then
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get update
+        apt-get install -y python3
+    elif command -v dnf >/dev/null 2>&1; then
+        dnf install -y python3
+    elif command -v pacman >/dev/null 2>&1; then
+        pacman -S --needed --noconfirm python
+    else
+        printf '%s ERROR installer dependency /usr/bin/python3 unavailable; install Python 3 first\n' "$(date -u +%FT%TZ)" >&2
+        exit 1
+    fi
+fi
+exec /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin SUDO_UID="${SUDO_UID-}" /usr/bin/python3 -I -B "$base/installer.py" install "$@"

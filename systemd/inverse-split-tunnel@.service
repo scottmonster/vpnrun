@@ -1,0 +1,16 @@
+[Unit]
+Description=Inverse split tunnel privileged request
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/python3 -I /usr/local/lib/inverse-split-tunnel/service.py
+StandardInput=socket
+StandardOutput=journal
+StandardError=journal
+UMask=0077
+Environment=PATH=/usr/sbin:/usr/bin:/sbin:/bin
+WorkingDirectory=/
+KillMode=control-group
+TimeoutStopSec=5
+# Named network namespace mounts must survive across requests: do not enable
+# PrivateMounts, PrivateTmp, or filesystem protection that isolates mounts.

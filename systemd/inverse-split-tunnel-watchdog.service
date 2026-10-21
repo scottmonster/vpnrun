@@ -1,0 +1,19 @@
+[Unit]
+Description=vpnrun background tunnel recovery and monitoring
+After=network.target inverse-split-tunnel.socket
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/python3 -I -B /usr/local/lib/inverse-split-tunnel/watchdog.py
+Restart=always
+RestartSec=1
+WatchdogSec=120
+TimeoutStopSec=5
+KillMode=control-group
+UMask=0077
+Environment=PATH=/usr/sbin:/usr/bin:/sbin:/bin
+WorkingDirectory=/
+
+[Install]
+WantedBy=multi-user.target

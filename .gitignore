@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+private/
+*.key
+identity.json
+installation.json
+state.json
+selection.json
+desired.json
+settings.json
+revision.json
+manifest.json
+*.tar.gz

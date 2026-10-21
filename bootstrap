@@ -1,0 +1,13 @@
+#!/bin/sh
+# Run as a normal login: curl -fsSL .../bootstrap | sh
+set -eu
+if ! command -v python3 >/dev/null 2>&1; then
+    printf '%s\n' 'Install Python 3 first, then rerun this command.' >&2
+    exit 1
+fi
+work=$(mktemp -d)
+trap 'rm -rf -- "$work"' EXIT HUP INT TERM
+curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+    https://raw.githubusercontent.com/scottmonster/vpnrun/master/updater.py \
+    -o "$work/updater.py"
+python3 -I -B "$work/updater.py" --install

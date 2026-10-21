@@ -1,0 +1,14 @@
+[Unit]
+Description=Inverse split tunnel control socket
+
+[Socket]
+ListenStream=/run/inverse-split-tunnel/control.sock
+SocketUser=@USER@
+SocketMode=0600
+DirectoryMode=0711
+Accept=yes
+MaxConnections=64
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target
