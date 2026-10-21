@@ -5,7 +5,15 @@ import datetime
 import os
 from pathlib import Path
 import pwd
+import shutil
 import sys
+
+
+def resolve_command(command, path):
+    """Keep PATH precedence; treat an unknown bare name as a local path."""
+    if '/' not in command[0] and shutil.which(command[0], path=path) is None:
+        return ['./' + command[0], *command[1:]]
+    return command
 
 
 def sandbox(user, cwd, command, dns=None):
@@ -39,9 +47,10 @@ def main():
                XDG_RUNTIME_DIR=f'/run/user/{user.pw_uid}')
     env.setdefault('PATH', '/usr/local/bin:/usr/bin:/bin')
     os.chdir(request['cwd'])
+    command = resolve_command(request['command'], env['PATH'])
     os.write(ready_fd, b'1')
     os.close(ready_fd)
-    os.execve('/usr/bin/bwrap', sandbox(user, request['cwd'], request['command']), env)
+    os.execve('/usr/bin/bwrap', sandbox(user, request['cwd'], command), env)
 
 
 if __name__ == '__main__':

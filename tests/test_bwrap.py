@@ -14,14 +14,26 @@ ROOT = Path(__file__).resolve().parents[1]
 @unittest.skipUnless(shutil.which('bwrap') and os.geteuid() != 0, 'needs Bubblewrap and a normal login')
 class LauncherIntegration(unittest.TestCase):
     def test_real_payload_receives_marker_and_private_resolver(self):
+        self.check_payload()
+
+    def test_bare_local_executable_runs_in_sandbox(self):
+        # Home remains visible inside Bubblewrap; host /tmp is deliberately hidden.
+        with tempfile.TemporaryDirectory(prefix='.vpnrun-launch-test-', dir=Path.home()) as directory:
+            executable = Path(directory) / 'vpnrun-local-test'
+            executable.write_text('#!/usr/bin/python3\n' + self.payload + '\n')
+            executable.chmod(0o755)
+            self.check_payload(command=[executable.name], cwd=directory)
+
+    payload = "import os; from pathlib import Path; assert os.environ['VPNRUN']=='1'; assert 'HTTP_PROXY' not in os.environ; assert Path('/etc/resolv.conf').read_text()=='nameserver 10.64.0.1\\n'; print('PAYLOAD_OK')"
+
+    def check_payload(self, command=None, cwd=ROOT):
         with tempfile.TemporaryDirectory(prefix='vpnrun-launch-test-') as directory:
             dns = Path(directory)
             (dns / 'resolv.conf').write_text('nameserver 10.64.0.1\n')
             (dns / 'nsswitch.conf').write_text('hosts: files dns\n')
             with tempfile.TemporaryFile() as request:
-                payload = "import os; from pathlib import Path; assert os.environ['VPNRUN']=='1'; assert 'HTTP_PROXY' not in os.environ; assert Path('/etc/resolv.conf').read_text()=='nameserver 10.64.0.1\\n'; print('PAYLOAD_OK')"
-                request.write(json.dumps({'command': ['/usr/bin/python3', '-I', '-B', '-c', payload],
-                                          'cwd': str(ROOT), 'env': {'VPNRUN': '0', 'HTTP_PROXY': 'http://invalid'}}).encode())
+                request.write(json.dumps({'command': command or ['/usr/bin/python3', '-I', '-B', '-c', self.payload],
+                                          'cwd': str(cwd), 'env': {'VPNRUN': '0', 'HTTP_PROXY': 'http://invalid'}}).encode())
                 request.seek(0)
                 read_ready, write_ready = os.pipe()
                 code = (f'import sys; sys.path.insert(0,{str(ROOT)!r}); import launch; '

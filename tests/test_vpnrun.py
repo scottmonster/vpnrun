@@ -69,6 +69,26 @@ class CommandTests(unittest.TestCase):
     def test_control_alias(self):
         self.assertEqual(client.parse_args(['switch', RELAY['hostname']], control=True).server, RELAY['hostname'])
 
+    def test_bare_command_falls_back_to_current_directory(self):
+        command = ['vt', 'two words', '', '--flag', '*']
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(launch.resolve_command(command, directory), ['./vt', *command[1:]])
+        self.assertEqual(command[0], 'vt')
+
+    def test_path_executable_takes_precedence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / 'vt'
+            executable.write_text('#!/bin/sh\nexit 0\n')
+            executable.chmod(0o755)
+            self.assertEqual(launch.resolve_command(['vt', 'arg'], directory), ['vt', 'arg'])
+            executable.chmod(0o644)
+            self.assertEqual(launch.resolve_command(['vt', 'arg'], directory), ['./vt', 'arg'])
+
+    def test_explicit_command_paths_are_preserved(self):
+        for name in ('./vt', '../vt', 'scripts/vt', '/usr/bin/echo'):
+            with self.subTest(name=name):
+                self.assertEqual(launch.resolve_command([name, 'arg'], ''), [name, 'arg'])
+
     def test_marker_is_overwritten_after_privilege_drop(self):
         with tempfile.TemporaryDirectory() as directory:
             payload = tempfile.TemporaryFile()

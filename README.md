@@ -31,7 +31,9 @@ vpnrun update                      # Upgrade from GitHub master; asks for sudo
 vpnrun uninstall                   # Offers device revocation/credential removal
 ```
 
-`vpnrun ./script.sh "$@"` also works. In a wrapper that has no further work, use
+`vpnrun script.sh "$@"` searches `PATH` first, then tries `./script.sh` in the
+current directory. Explicit paths such as `vpnrun ./script.sh "$@"` also work.
+In a wrapper that has no further work, use
 `exec vpnrun -- /absolute/path/script.sh "$@"`. All launched programs receive
 `VPNRUN=1`; this is a convenience marker, not proof of connectivity. `vpnctl`
 remains an alias for control commands. The old `vpn-run` name is removed on upgrade.

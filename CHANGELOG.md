@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+- Resolve bare application names through `PATH`, falling back to the current
+  directory when no executable is found there (`vpnrun vt` tries `./vt`).
+
 ## 0.2.0
 
 - Rename `vpn-run` to `vpnrun`; set `VPNRUN=1` in every launched program.
